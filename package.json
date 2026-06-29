@@ -1,0 +1,19 @@
+{
+  "name": "glamics-mern",
+  "version": "1.0.0",
+  "description": "Glamics Fashion E-Commerce MERN Application",
+  "private": true,
+  "workspaces": ["client", "admin", "server"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev:admin": "cd admin && npm run dev",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install && cd ../admin && npm install",
+    "seed": "cd server && npm run seed",
+    "build": "cd client && npm run build && cd ../admin && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
