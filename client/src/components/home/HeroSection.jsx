@@ -56,8 +56,8 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="ul-container">
-      <div>
+    <div className="overflow-hidden">
+      <div className="ul-container">
         {/* .ul-banner uses display:flex with gap — matches original exactly */}
         <section className="ul-banner">
 
@@ -85,7 +85,7 @@ export default function HeroSection() {
                         <img
                           src={slide.image}
                           alt={slide.heading}
-                          style={{ width: '100%', display: 'block' }}
+                          style={{ display: 'block' }}
                         />
                       </div>
                       <div className="ul-banner-slide-txt">
@@ -154,15 +154,7 @@ export default function HeroSection() {
                     <img
                       src={slide.thumbImage || slide.image}
                       alt={slide.heading}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        aspectRatio: '1/1',
-                        borderRadius: 20,
-                        display: 'block',
-                        cursor: 'pointer',
-                      }}
+                      style={{ cursor: 'pointer' }}
                       onClick={() => mainSwiperRef.current?.slideTo(i + 1)}
                     />
                   </SwiperSlide>

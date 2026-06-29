@@ -50,6 +50,14 @@ html {
   overflow-x: hidden;
 }
 
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
 body {
   font-family: var(--font-primary);
   margin: auto;
@@ -1083,12 +1091,30 @@ button {
   display: inline-flex;
 }
 
+/* Each slide must be position:relative so the absolute text overlay works */
+.ul-banner-slide {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+}
+
+/* Main image always fills the slide with a fixed aspect ratio so any image height is normalised */
+.ul-banner-slide-img img {
+  width: 100%;
+  aspect-ratio: 1125 / 640;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: 30px;
+}
+
 @media screen and (max-width: 479px) {
+  .ul-banner-slide {
+    border-radius: 30px;
+  }
   .ul-banner-slide-img {
     margin-bottom: clamp(20px, 1.58vw, 30px);
   }
-}
-@media screen and (max-width: 479px) {
   .ul-banner-slide-img img {
     width: 100%;
     aspect-ratio: 400/459;
@@ -1872,7 +1898,9 @@ button {
 
 .ul-nwsltr-subs {
   border-radius: clamp(15px, 2.1vw, 40px);
-  background: url(../img/nwsltr-subs-bg.jpg) no-repeat center center;
+  background-color: #ccc;
+  background-repeat: no-repeat;
+  background-position: center center;
   background-size: cover;
   position: relative;
   z-index: 1;
@@ -2081,27 +2109,46 @@ button {
   padding-top: 8px;
 }
 
+/* ── INSTAGRAM GALLERY — CSS marquee, infinite, alternating shapes ── */
+@keyframes ul-gallery-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 .ul-gallery {
   padding-bottom: clamp(40px, 4.2vw, 80px);
   max-width: 1920px;
   margin: auto;
+  overflow: hidden;
+}
+
+/* Track = set A + set B side by side. Animates left by 50% = one set width.
+   When it snaps back to 0, set A reappears — seamless because A and B are identical. */
+.ul-gallery-marquee-track {
+  display: flex;
+  gap: clamp(10px, 1.05vw, 20px);
+  width: max-content;
+  animation: ul-gallery-scroll 16s linear infinite;
+}
+
+.ul-gallery:hover .ul-gallery-marquee-track {
+  animation-play-state: paused;
 }
 
 .ul-gallery-item {
+  flex: 0 0 clamp(160px, 17vw, 280px);
   position: relative;
   overflow: hidden;
-  border-radius: clamp(10px, 1.05vw, 20px);
-  transition: 0.4s ease;
+  /* border-radius set inline per item — square or circle */
 }
-.ul-gallery-item:hover .ul-gallery-item-btn-wrapper {
-  opacity: 1;
-}
-.ul-gallery-item:nth-child(odd) {
-  border-radius: 999px;
-}
+
 .ul-gallery-item img {
   width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
 }
+
 .ul-gallery-item-btn-wrapper {
   position: absolute;
   inset: 0;
@@ -2110,7 +2157,7 @@ button {
   justify-content: center;
   z-index: 1;
   opacity: 0;
-  transition: 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 .ul-gallery-item-btn-wrapper::before {
   content: "";
@@ -2119,6 +2166,9 @@ button {
   background: var(--ul-gradient);
   opacity: 70%;
   z-index: -1;
+}
+.ul-gallery-item:hover .ul-gallery-item-btn-wrapper {
+  opacity: 1;
 }
 .ul-gallery-item-btn-wrapper a {
   font-size: clamp(34px, 2.1vw, 40px);

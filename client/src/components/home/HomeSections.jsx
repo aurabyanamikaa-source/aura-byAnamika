@@ -150,58 +150,72 @@ export function FlashSaleSection({ config = {} }) {
   const pad = n => String(n).padStart(2, '0');
 
   return (
-    <div className="ul-container">
-      <section style={{ margin: 'clamp(40px,4.2vw,80px) 0' }}>
-        <div className="ul-inner-container">
-          <div className="ul-section-heading" style={{ flexWrap: 'wrap', gap: 20 }}>
-            <div>
-              <span className="ul-section-sub-title">{config.subtitle || 'New Collection'}</span>
-              <h2 className="ul-section-title">{config.title || 'Trending Flash Sell'}</h2>
-            </div>
-            {/* Countdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {[
-                { num: pad(timeLeft.days), label: 'DAYS' },
-                { num: pad(timeLeft.hours), label: 'HRS' },
-                { num: pad(timeLeft.minutes), label: 'MINS' },
-                { num: pad(timeLeft.seconds), label: 'SECS' },
-              ].map((t, i) => (
-                <React.Fragment key={t.label}>
-                  <div className="countdown-box">
-                    <span className="num">{t.num}</span>
-                    <span className="label">{t.label}</span>
-                  </div>
-                  {i < 3 && <span className="countdown-sep">:</span>}
-                </React.Fragment>
-              ))}
-            </div>
-            <Link to="/shop?onSale=true" className="ul-btn">
-              View All <i className="bi bi-arrow-right"></i>
-            </Link>
-          </div>
+    <div className="overflow-hidden">
+      <div className="ul-container">
+        <div className="ul-flash-sale">
+          <div className="ul-inner-container">
 
-          <Swiper
-            modules={[Navigation, Autoplay]}
-            spaceBetween={30}
-            slidesPerView={4}
-            navigation
-            autoplay={{ delay: 2500, disableOnInteraction: false }}
-            loop={products.length > 4}
-            breakpoints={{
-              0: { slidesPerView: 1 },
-              480: { slidesPerView: 2 },
-              768: { slidesPerView: 3 },
-              1200: { slidesPerView: 4 },
-            }}
-          >
-            {products.map(product => (
-              <SwiperSlide key={product._id}>
-                <ProductCard product={product} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+            {/* Heading row */}
+            <div className="ul-section-heading ul-flash-sale-heading">
+              <div className="left">
+                <span className="ul-section-sub-title">{config.subtitle || 'New Collection'}</span>
+                <h2 className="ul-section-title">{config.title || 'Trending Flash Sell'}</h2>
+              </div>
+
+              <div className="ul-flash-sale-countdown-wrapper">
+                <div className="ul-flash-sale-countdown">
+                  <div className="days-wrapper">
+                    <div className="days number">{pad(timeLeft.days)}</div>
+                    <span className="txt">Days</span>
+                  </div>
+                  <div className="hours-wrapper">
+                    <div className="hours number">{pad(timeLeft.hours)}</div>
+                    <span className="txt">Hours</span>
+                  </div>
+                  <div className="minutes-wrapper">
+                    <div className="minutes number">{pad(timeLeft.minutes)}</div>
+                    <span className="txt">Min</span>
+                  </div>
+                  <div className="seconds-wrapper">
+                    <div className="seconds number">{pad(timeLeft.seconds)}</div>
+                    <span className="txt">Sec</span>
+                  </div>
+                </div>
+              </div>
+
+              <Link to="/shop?onSale=true" className="ul-btn">
+                View All Collection <i className="bi bi-arrow-up-right"></i>
+              </Link>
+            </div>
+
+            {/* Products slider */}
+            <Swiper
+              modules={[Navigation, Autoplay]}
+              className="ul-flash-sale-slider"
+              slidesPerView={1}
+              loop={products.length > 4}
+              autoplay={{ delay: 3000, disableOnInteraction: false }}
+              spaceBetween={15}
+              navigation
+              breakpoints={{
+                480: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                992: { slidesPerView: 4 },
+                1200: { spaceBetween: 20, slidesPerView: 4 },
+                1680: { spaceBetween: 26, slidesPerView: 4 },
+                1700: { spaceBetween: 30, slidesPerView: 4.7 },
+              }}
+            >
+              {products.map(product => (
+                <SwiperSlide key={product._id}>
+                  <ProductCard product={product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
@@ -279,48 +293,35 @@ export function NewsletterSection() {
   };
 
   return (
-    <section className="ul-newsletter" style={{
-      background: 'linear-gradient(90deg, #EF2853 0%, #FFA31A 100%)',
-      padding: 'clamp(40px,4.2vw,80px) 0',
-      margin: 'clamp(40px,4.2vw,80px) 0',
-      borderRadius: 'clamp(15px,2.1vw,40px)',
-    }}>
-      <div className="ul-container">
-        <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
-          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, letterSpacing: '3px', textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
-            GET NEWSLETTER
-          </span>
-          <h2 style={{ color: '#fff', fontWeight: 700, fontSize: 'clamp(24px,2.1vw,40px)', marginBottom: 30, letterSpacing: '-0.02em' }}>
-            Sign Up to Newsletter
-          </h2>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 0, borderRadius: 999, overflow: 'hidden', background: '#fff', maxWidth: 500, margin: '0 auto' }}>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{
-                flex: 1, border: 'none', padding: '14px 20px',
-                fontSize: 14, background: 'transparent',
-              }}
-            />
-            <button type="submit" style={{
-              background: '#000', color: '#fff', padding: '0 24px',
-              border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14,
-              textTransform: 'uppercase', letterSpacing: 1,
-              transition: '0.3s',
-            }}>
-              Subscribe
-            </button>
-          </form>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 16 }}>
-            Get early access to exclusive deals and new arrivals. No spam, unsubscribe anytime.
-          </p>
+    <div className="ul-container">
+      <section className="ul-nwsltr-subs" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1400&h=600&fit=crop')" }}>
+        <div className="ul-inner-container">
+          <div className="ul-section-heading justify-content-center text-center">
+            <div>
+              <span className="ul-section-sub-title text-white">GET NEWSLETTER</span>
+              <h2 className="ul-section-title text-white">Sign Up to Newsletter</h2>
+            </div>
+          </div>
+          <div className="ul-nwsltr-subs-form-wrapper">
+            <div className="icon"><i className="bi bi-send"></i></div>
+            <form className="ul-nwsltr-subs-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                placeholder="Enter Your Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+              <button type="submit">
+                SUBSCRIBE NOW <i className="bi bi-arrow-up-right"></i>
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
+
 
 // ─── BLOG ─────────────────────────────────────────────────────────
 export function BlogSection({ config = {} }) {
@@ -396,46 +397,47 @@ export function BlogSection({ config = {} }) {
 
 // ─── INSTAGRAM GALLERY ────────────────────────────────────────────
 export function GallerySection({ config = {} }) {
-  const images = config.images || Array(8).fill('https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&h=300&fit=crop');
+  const defaultImages = [
+    'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&h=400&fit=crop',
+  ];
+  const images = (config.images && config.images.length) ? config.images : defaultImages;
+
+  // Duplicate: render set A + set B side by side.
+  // Animate: slide the track left by exactly 50% (= one full set width).
+  // Shape: use position within ONE set (pos % images.length % 2) so both
+  //        set A and set B have identical square-circle-square-circle pattern —
+  //        the loop snap is invisible because the pattern matches perfectly.
+  const doubled = [...images, ...images];
 
   return (
-    <section style={{ margin: 'clamp(40px,4.2vw,80px) 0' }}>
-      <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <span className="ul-section-sub-title">{config.subtitle || 'Follow Us'}</span>
-        <h2 className="ul-section-title">{config.title || 'Follow Us @glamics'}</h2>
-      </div>
-      <Swiper
-        modules={[Autoplay]}
-        spaceBetween={10}
-        slidesPerView={5}
-        loop
-        autoplay={{ delay: 0, disableOnInteraction: false }}
-        speed={3000}
-        breakpoints={{
-          0: { slidesPerView: 2 },
-          480: { slidesPerView: 3 },
-          768: { slidesPerView: 4 },
-          1200: { slidesPerView: 6 },
-        }}
-      >
-        {images.concat(images).map((img, i) => (
-          <SwiperSlide key={i}>
-            <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '1/1' }}>
-              <img src={img} alt={`Gallery ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{
-                position: 'absolute', inset: 0, background: 'rgba(239,40,83,0.5)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0, transition: '0.3s ease',
-              }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                onMouseLeave={e => e.currentTarget.style.opacity = 0}
-              >
-                <i className="bi bi-instagram" style={{ color: '#fff', fontSize: 28 }}></i>
+    <div className="ul-gallery overflow-hidden mx-auto">
+      <div className="ul-gallery-marquee-track" style={{ '--set-count': 2 }}>
+        {doubled.map((img, i) => {
+          const posInSet = i % images.length;
+          const isCircle = posInSet % 2 === 1;
+          return (
+            <div
+              key={i}
+              className="ul-gallery-item"
+              style={{ borderRadius: isCircle ? '999px' : 'clamp(10px, 1.05vw, 20px)' }}
+            >
+              <img src={img} alt={`Gallery ${i + 1}`} />
+              <div className="ul-gallery-item-btn-wrapper">
+                <a href={img} target="_blank" rel="noreferrer">
+                  <i className="bi bi-instagram"></i>
+                </a>
               </div>
             </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </section>
+          );
+        })}
+      </div>
+    </div>
   );
 }
