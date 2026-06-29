@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import api from '../../services/api';
+import api, { CLIENT_URL } from '../../services/api';
 import toast from 'react-hot-toast';
 
 // ──── BLOG LIST ───────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export function BlogPage() {
                       <Link to={`/blog/${post._id}/edit`} className="btn btn-outline btn-sm btn-icon" title="Edit">
                         <i className="bi bi-pencil"></i>
                       </Link>
-                      <a href={`http://localhost:5173/blog/${post.slug}`} target="_blank" rel="noreferrer"
+                      <a href={`${CLIENT_URL}/blog/${post.slug}`} target="_blank" rel="noreferrer"
                         className="btn btn-outline btn-sm btn-icon" title="View">
                         <i className="bi bi-box-arrow-up-right"></i>
                       </a>

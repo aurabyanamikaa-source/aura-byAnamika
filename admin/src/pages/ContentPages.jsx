@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import api from '../services/api';
+import api, { CLIENT_URL } from '../services/api';
 import toast from 'react-hot-toast';
 
 // ──── BANNERS PAGE ────────────────────────────────────────────────
@@ -343,7 +343,7 @@ export function HomepageBuilderPage() {
           <p style={{ color: 'var(--muted)', fontSize: 13 }}>Drag to reorder sections and toggle visibility</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <a href="http://localhost:5173" target="_blank" rel="noreferrer" className="btn btn-outline">
+          <a href={CLIENT_URL} target="_blank" rel="noreferrer" className="btn btn-outline">
             <i className="bi bi-eye"></i> Preview
           </a>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>

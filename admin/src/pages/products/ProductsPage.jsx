@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { CLIENT_URL } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function ProductsPage() {
@@ -155,7 +155,7 @@ export default function ProductsPage() {
                       <Link to={`/products/${product._id}/edit`} className="btn btn-outline btn-sm btn-icon" title="Edit">
                         <i className="bi bi-pencil"></i>
                       </Link>
-                      <a href={`http://localhost:5173/shop/${product.slug}`} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm btn-icon" title="View on store">
+                      <a href={`${CLIENT_URL}/shop/${product.slug}`} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm btn-icon" title="View on store">
                         <i className="bi bi-box-arrow-up-right"></i>
                       </a>
                       <button

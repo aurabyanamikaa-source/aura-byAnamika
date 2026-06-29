@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
+import { CLIENT_URL } from '../../services/api';
 
 const NAV = [
   { group: 'Main', items: [
@@ -106,7 +107,7 @@ export default function AdminLayout() {
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <a href="http://localhost:5173" target="_blank" rel="noreferrer"
+            <a href={CLIENT_URL} target="_blank" rel="noreferrer"
               style={{ fontSize: 13, color: '#666', display: 'flex', alignItems: 'center', gap: 6 }}>
               <i className="bi bi-box-arrow-up-right"></i> View Store
             </a>

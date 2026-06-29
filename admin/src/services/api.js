@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api', timeout: 15000 });
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+export const CLIENT_URL = import.meta.env.VITE_CLIENT_URL || 'http://localhost:5173';
+
+const api = axios.create({ baseURL: API_URL, timeout: 15000 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('adminToken');
