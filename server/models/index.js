@@ -31,17 +31,46 @@ const settingsSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Menu Model
+// 3-level navigation tree: top-level nav item -> category -> subcategory.
+// Fully editable from the admin Menu Builder (label, link, badge, image,
+// layout, ordering and active/inactive state at every level).
+const menuSubItemSchema = new mongoose.Schema({
+  label: { type: String, required: true },
+  url: { type: String, default: '#' },
+  target: { type: String, default: '_self' },
+  badge: { type: String, default: '' },
+  order: { type: Number, default: 0 },
+  isActive: { type: Boolean, default: true },
+});
+
+const menuChildSchema = new mongoose.Schema({
+  label: { type: String, required: true },
+  url: { type: String, default: '#' },
+  target: { type: String, default: '_self' },
+  badge: { type: String, default: '' },
+  image: { type: String, default: '' },
+  order: { type: Number, default: 0 },
+  isActive: { type: Boolean, default: true },
+  children: [menuSubItemSchema],
+});
+
 const menuItemSchema = new mongoose.Schema({
   label: { type: String, required: true },
   url: { type: String, default: '#' },
   target: { type: String, default: '_self' },
   icon: String,
-  children: [{
-    label: String,
-    url: String,
-    target: { type: String, default: '_self' },
-    children: [{ label: String, url: String }],
-  }],
+  badge: { type: String, default: '' },
+  // 'link'  -> plain link, no dropdown
+  // 'simple'-> single-column dropdown list
+  // 'mega'  -> full multi-column mega menu with sub-categories
+  layout: { type: String, enum: ['link', 'simple', 'mega'], default: 'link' },
+  promo: {
+    image: { type: String, default: '' },
+    title: { type: String, default: '' },
+    subtitle: { type: String, default: '' },
+    url: { type: String, default: '' },
+  },
+  children: [menuChildSchema],
   order: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
 });

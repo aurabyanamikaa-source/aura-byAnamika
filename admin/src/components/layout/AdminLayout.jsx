@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
-import { CLIENT_URL } from '../../services/api';
 
 const NAV = [
   { group: 'Main', items: [
@@ -11,6 +10,7 @@ const NAV = [
   { group: 'Store', items: [
     { to: '/products', label: 'Products', icon: 'bi-box-seam' },
     { to: '/categories', label: 'Categories', icon: 'bi-tags' },
+    { to: '/menus', label: 'Navigation Menu', icon: 'bi-list-ul' },
     { to: '/orders', label: 'Orders', icon: 'bi-bag-check' },
     { to: '/coupons', label: 'Coupons', icon: 'bi-ticket-perforated' },
   ]},
@@ -107,7 +107,7 @@ export default function AdminLayout() {
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <a href={CLIENT_URL} target="_blank" rel="noreferrer"
+            <a href="http://localhost:5173" target="_blank" rel="noreferrer"
               style={{ fontSize: 13, color: '#666', display: 'flex', alignItems: 'center', gap: 6 }}>
               <i className="bi bi-box-arrow-up-right"></i> View Store
             </a>

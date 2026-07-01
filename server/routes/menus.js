@@ -3,20 +3,98 @@ const router = express.Router();
 const { protect, admin } = require('../middleware/auth');
 const { Menu } = require('../models/index');
 
+// Helper to quickly build a leaf sub-category
+const sub = (label, url) => ({ label, url: url || `/shop?search=${encodeURIComponent(label)}` });
+
+// Helper to build a category (level 2) with optional sub-categories (level 3)
+const cat = (label, subs = [], extra = {}) => ({
+  label,
+  url: subs.length ? '#' : `/shop?search=${encodeURIComponent(label)}`,
+  children: subs.map(s => (typeof s === 'string' ? sub(s) : sub(s.label, s.url))),
+  ...extra,
+});
+
 const DEFAULT_MENUS = {
-  header: { name: 'Header Menu', location: 'header', items: [
-    { label: 'Home', url: '/', order: 0, isActive: true },
-    { label: 'Shop', url: '/shop', order: 1, isActive: true, children: [
-      { label: 'All Products', url: '/shop', children: [] },
-      { label: 'New Arrivals', url: '/shop?newArrival=true', children: [] },
-      { label: 'Best Sellers', url: '/shop?bestSeller=true', children: [] },
-      { label: 'Sale', url: '/shop?onSale=true', children: [] },
-    ]},
-    { label: 'Blog', url: '/blog', order: 2, isActive: true },
-    { label: 'About', url: '/about', order: 3, isActive: true },
-    { label: 'Contact', url: '/contact', order: 4, isActive: true },
-    { label: 'FAQ', url: '/faq', order: 5, isActive: true },
-  ]},
+  header: {
+    name: 'Header Menu',
+    location: 'header',
+    items: [
+      { label: 'Home', url: '/', order: 0, isActive: true, layout: 'link' },
+
+      {
+        label: 'New Arrivals', url: '/shop?newArrival=true', order: 1, isActive: true, layout: 'simple',
+        children: [
+          cat('Just In', [], { url: '/shop?newArrival=true&sort=newest' }),
+          cat('Trending Now', [], { url: '/shop?search=trending' }),
+          cat('Best Sellers', [], { url: '/shop?bestSeller=true' }),
+        ],
+      },
+
+      {
+        label: 'Women', url: '/shop', order: 2, isActive: true, layout: 'mega',
+        promo: { image: '', title: 'Bridal Edit', subtitle: 'Curated lehengas for your big day', url: '/shop?search=Bridal Lehengas' },
+        children: [
+          cat('Lehengas', ['Bridal Lehengas', 'Bridesmaid Lehengas', 'Designer Lehengas', 'Festive Lehengas', 'Reception Lehengas']),
+          cat('Sarees', ['Banarasi Sarees', 'Chanderi Sarees', 'Silk Sarees', 'Organza Sarees', 'Tissue Sarees', 'Designer Sarees', 'Printed Sarees', 'Everyday Sarees']),
+          cat('Suit Sets', ['Kurta Sets', 'Anarkali Sets', 'Sharara Sets', 'Gharara Sets', 'Palazzo Sets', 'Straight Suit Sets']),
+          cat('Indo-Western', ['Indo-Western Gowns', 'Draped Dresses', 'Jacket Sets', 'Fusion Wear', 'Salwar Suits']),
+          cat('Kurtas & Kurtis', ['Designer Kurtis', 'Short Kurtis', 'Long Kurtis', 'Printed Kurtis', 'Embroidered Kurtis']),
+          cat('Dresses & Gowns', ['Evening Gowns', 'Party Dresses', 'Maxi Dresses']),
+          cat('Co-ord Sets', []),
+          cat('Kaftans', []),
+          cat('Tops & Tunics', ['Tops', 'Tunics', 'Shirts']),
+          cat('Bottom Wear', ['Pants', 'Palazzo', 'Skirts', 'Sharara', 'Cigarette Pants']),
+          cat('Dupattas', ['Wedding Collection', 'Banarasi Dupattas', 'Organza Dupattas', 'Chanderi Dupattas', 'Embroidered Dupattas']),
+          cat('Jackets', ['Ethnic Jackets', 'Cape Jackets']),
+        ],
+      },
+
+      {
+        label: 'Shop by Occasion', url: '#', order: 3, isActive: true, layout: 'mega',
+        children: [
+          cat('Bridal Collection', []), cat('Wedding Guest', []), cat('Engagement', []),
+          cat('Reception', []), cat('Haldi', []), cat('Mehendi', []), cat('Sangeet', []),
+          cat('Cocktail Party', []), cat('Festive Wear', []), cat('Pooja Collection', []),
+          cat('Summer Brunch', []), cat('Office Wear', []), cat('Vacation Edit', []),
+        ],
+      },
+
+      {
+        label: 'Collections', url: '#', order: 4, isActive: true, layout: 'simple',
+        children: [
+          cat('Wedding Collection', []), cat('Festive Collection', []), cat('Heritage Collection', []),
+          cat('Summer Collection', []), cat('Luxury Collection', []), cat('Designer Edit', []),
+        ],
+      },
+
+      {
+        label: 'Ready to Ship', url: '#', order: 5, isActive: true, layout: 'simple',
+        children: [cat('48 Hours Dispatch', []), cat('Ready to Wear', [])],
+      },
+
+      {
+        label: 'Accessories', url: '#', order: 6, isActive: true, layout: 'simple',
+        children: [cat('Dupattas', []), cat('Potli Bags', []), cat('Belts', []), cat('Jewellery', [])],
+      },
+
+      {
+        label: 'Sale', url: '/shop?onSale=true', order: 7, isActive: true, layout: 'simple', badge: 'Sale',
+        children: [
+          cat('Up to 30% Off', [], { url: '/shop?onSale=true&search=30' }),
+          cat('Up to 50% Off', [], { url: '/shop?onSale=true&search=50' }),
+          cat('Clearance', [], { url: '/shop?onSale=true&search=clearance' }),
+        ],
+      },
+
+      {
+        label: 'Custom Services', url: '#', order: 8, isActive: true, layout: 'simple',
+        children: [cat('Custom Stitching', []), cat('Size Guide', [], { url: '/faq' }), cat('Bridal Consultation', []), cat('Personal Styling', [])],
+      },
+
+      { label: 'About Us', url: '/about', order: 9, isActive: true, layout: 'link' },
+      { label: 'Contact', url: '/contact', order: 10, isActive: true, layout: 'link' },
+    ],
+  },
   footer: { name: 'Footer Menu', location: 'footer', items: [
     { label: 'Quick Ship', url: '#', order: 0, isActive: true },
     { label: 'New Designs', url: '#', order: 1, isActive: true },
@@ -32,6 +110,7 @@ const DEFAULT_MENUS = {
   ]},
 };
 
+// PUBLIC: get a menu by location (auto-seeds defaults the first time)
 router.get('/:location', async (req, res) => {
   let menu = await Menu.findOne({ location: req.params.location }).lean();
   if (!menu && DEFAULT_MENUS[req.params.location]) {
@@ -40,17 +119,29 @@ router.get('/:location', async (req, res) => {
   res.json({ success: true, data: menu });
 });
 
+// ADMIN: list all menus
 router.get('/', protect, admin, async (req, res) => {
   const menus = await Menu.find().lean();
   res.json({ success: true, data: menus });
 });
 
+// ADMIN: full replace/save of a menu's item tree (used by the Menu Builder)
 router.put('/:location', protect, admin, async (req, res) => {
   const menu = await Menu.findOneAndUpdate(
     { location: req.params.location },
-    req.body,
-    { new: true, upsert: true }
+    { $set: { items: req.body.items, name: req.body.name } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+  res.json({ success: true, data: menu });
+});
+
+// ADMIN: reset a menu back to its factory default structure
+router.post('/:location/reset', protect, admin, async (req, res) => {
+  if (!DEFAULT_MENUS[req.params.location]) {
+    return res.status(400).json({ success: false, message: 'No default exists for this menu location' });
+  }
+  await Menu.deleteOne({ location: req.params.location });
+  const menu = await Menu.create(DEFAULT_MENUS[req.params.location]);
   res.json({ success: true, data: menu });
 });
 
