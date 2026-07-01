@@ -71,7 +71,7 @@ export default function CartPage() {
 
   return (
     <>
-      <Helmet><title>Cart ({items.length}) - Aura by Anamika</title></Helmet>
+      <Helmet><title>{`Cart (${items.length}) - Aura by Anamika`}</title></Helmet>
 
       <div className="ul-container">
         <Breadcrumb title="Cart" links={[{ label: 'Cart' }]} />
