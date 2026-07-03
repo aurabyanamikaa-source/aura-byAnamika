@@ -1,4 +1,13 @@
 /**
+ * DEPRECATED: AdSection.jsx no longer reads this legacy `ad`-type Banner
+ * document — it was the cause of a bug where edits made in Admin >
+ * Homepage Builder > Advertisement Banner silently had no effect, because
+ * this doc always took priority over the Homepage Builder config. The Ad
+ * section is now driven entirely by the HomepageSection `ad` config
+ * (title/subtitle/buttonText/buttonLink/image/categories), editable from
+ * Admin > Homepage Builder > Advertisement Banner > Configure. This
+ * script is kept only for reference and does nothing on its own anymore.
+ *
  * Standalone seed script that updates the existing `ad`-type Banner
  * document in the database.
  *

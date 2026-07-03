@@ -1,0 +1,1 @@
+export { CustomerDiariesPage as default } from '../ContentPages';

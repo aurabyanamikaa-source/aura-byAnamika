@@ -314,9 +314,50 @@ export function HomepageBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [editSection, setEditSection] = useState(null);
   const [uploadingGallery, setUploadingGallery] = useState(null); // `${sectionKey}-${idx}` while an upload is in flight
+  const [uploadingRowBanner, setUploadingRowBanner] = useState(null); // `${sectionKey}-${rowIdx}` while a row banner upload is in flight
+  const [categoryOptions, setCategoryOptions] = useState([]);
 
   useEffect(() => {
-    api.get('/homepage').then(r => setSections(r.data.data.sort((a, b) => a.order - b.order))).catch(() => {}).finally(() => setLoading(false));
+    api.get('/homepage').then(r => {
+      const fetched = r.data.data.sort((a, b) => a.order - b.order).map(s => {
+        // Older/unmigrated installs may not have `rows` yet on the products
+        // section config — backfill a sensible default so the editor works.
+        if (s.key === 'products' && !s.config?.rows?.length) {
+          return {
+            ...s,
+            config: {
+              ...s.config,
+              buttonText: s.config?.buttonText || 'More Collection',
+              buttonLink: s.config?.buttonLink || '/shop',
+              rows: [
+                { category: '', limit: 6, banner: { image: '', title: 'Trending Now Only This Weekend!', buttonText: 'Shop Now', buttonLink: '/shop' } },
+                { category: '', limit: 6, banner: { image: '', title: 'Trending Now Only This Weekend!', buttonText: 'Shop Now', buttonLink: '/shop' } },
+              ],
+            },
+          };
+        }
+        // Older/unmigrated installs may not have `image`/`categories` yet on
+        // the ad banner config — backfill so the editor has something to show.
+        if (s.key === 'ad' && (!s.config?.image || !s.config?.categories?.length)) {
+          return {
+            ...s,
+            config: {
+              ...s.config,
+              image: s.config?.image || 'https://images.unsplash.com/photo-1772570824145-e996a55204fb?w=1600&q=70&auto=format&fit=crop',
+              categories: s.config?.categories?.length ? s.config.categories : ['Sarees', 'Lehengas', 'Kurtis', 'Anarkali', 'Suits'],
+            },
+          };
+        }
+        return s;
+      });
+      setSections(fetched);
+    }).catch(() => {}).finally(() => setLoading(false));
+    // Same source of truth as the storefront nav / "Shop by Category" grid,
+    // so the category picked here always matches a real, filterable category.
+    api.get('/menus/header').then(r => {
+      const items = (r.data.data?.items || []).filter(item => item.layout !== 'link' && item.children?.length > 0);
+      setCategoryOptions(items.map(item => item.label));
+    }).catch(() => {});
   }, []);
 
   const toggle = (key) => setSections(ss => ss.map(s => s.key === key ? { ...s, isEnabled: !s.isEnabled } : s));
@@ -374,6 +415,90 @@ export function HomepageBuilderPage() {
     const section = sections.find(s => s.key === key);
     const images = normalizeGalleryImages(section.config).filter((_, i) => i !== idx);
     setGalleryImages(key, images);
+  };
+
+  // ── Featured Products rows (category + banner per row) ──
+  const getRows = (key) => sections.find(s => s.key === key)?.config?.rows || [];
+
+  const updateRow = (key, rowIdx, patch) => {
+    const rows = getRows(key).map((r, i) => i === rowIdx ? { ...r, ...patch } : r);
+    updateConfig(key, { rows });
+  };
+
+  const updateRowBanner = (key, rowIdx, patch) => {
+    const rows = getRows(key);
+    const row = rows[rowIdx] || {};
+    updateRow(key, rowIdx, { banner: { ...row.banner, ...patch } });
+  };
+
+  const handleRowBannerUpload = async (key, rowIdx, file) => {
+    if (!file) return;
+    setUploadingRowBanner(`${key}-${rowIdx}`);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      fd.append('folder', 'homepage-rows');
+      const { data } = await api.post('/upload/image', fd);
+      updateRowBanner(key, rowIdx, { image: data.data.url, imagePublicId: data.data.publicId });
+      toast.success('Banner image uploaded');
+    } catch {
+      toast.error('Image upload failed');
+    } finally {
+      setUploadingRowBanner(null);
+    }
+  };
+
+  // ── Ad Banner (image texture + checklist tags) ──
+  const [uploadingAdImage, setUploadingAdImage] = useState(false);
+
+  const handleAdImageUpload = async (key, file) => {
+    if (!file) return;
+    setUploadingAdImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      fd.append('folder', 'homepage-ad');
+      const { data } = await api.post('/upload/image', fd);
+      updateConfig(key, { image: data.data.url });
+      toast.success('Banner image uploaded');
+    } catch {
+      toast.error('Image upload failed');
+    } finally {
+      setUploadingAdImage(false);
+    }
+  };
+
+  const getCategories = (key) => sections.find(s => s.key === key)?.config?.categories || [];
+  const updateCategory = (key, idx, value) => {
+    const categories = getCategories(key).map((c, i) => i === idx ? value : c);
+    updateConfig(key, { categories });
+  };
+  const addCategory = (key) => updateConfig(key, { categories: [...getCategories(key), 'New Tag'] });
+  const removeCategory = (key, idx) => updateConfig(key, { categories: getCategories(key).filter((_, i) => i !== idx) });
+
+  // ── Flash Sale end date (stored as UTC ISO, edited as IST wall-clock) ──
+  // Everything in Mongo/JS Date is UTC under the hood; India doesn't have a
+  // "raw" timezone offset to worry about (no DST), it's always UTC+5:30.
+  const IST_OFFSET_MIN = 5 * 60 + 30;
+
+  const utcIsoToIstLocalInput = (isoStr) => {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return '';
+    const ist = new Date(d.getTime() + IST_OFFSET_MIN * 60000);
+    const pad = n => String(n).padStart(2, '0');
+    // Read back with UTC getters (not local getters) since we already
+    // manually shifted the timestamp by the IST offset above.
+    return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(ist.getUTCDate())}T${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
+  };
+
+  const istLocalInputToUtcIso = (localStr) => {
+    if (!localStr) return '';
+    const [datePart, timePart] = localStr.split('T');
+    const [y, m, d] = datePart.split('-').map(Number);
+    const [hh, mm] = (timePart || '00:00').split(':').map(Number);
+    const utcMs = Date.UTC(y, m - 1, d, hh, mm) - IST_OFFSET_MIN * 60000;
+    return new Date(utcMs).toISOString();
   };
 
   const SECTION_ICONS = { hero: 'bi-images', categories: 'bi-grid', products: 'bi-bag', ad: 'bi-megaphone', mostSelling: 'bi-fire', video: 'bi-play-circle', subBanners: 'bi-layout-text-window', flashSale: 'bi-lightning', reviews: 'bi-star', newsletter: 'bi-envelope', blog: 'bi-journal-text', gallery: 'bi-camera' };
@@ -439,7 +564,7 @@ export function HomepageBuilderPage() {
                 <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', background: '#fafafa' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', gap: 16 }}>
                     {Object.entries(section.config || {}).map(([k, v]) => (
-                      k === 'images' ? null :
+                      k === 'images' || k === 'endDate' ? null :
                       typeof v === 'string' ? (
                         <div key={k} className="form-group" style={{ margin: 0 }}>
                           <label className="form-label" style={{ textTransform: 'capitalize' }}>{k.replace(/([A-Z])/g, ' $1')}</label>
@@ -456,6 +581,62 @@ export function HomepageBuilderPage() {
                       ) : null
                     ))}
                   </div>
+
+                  {section.key === 'flashSale' && (
+                    <div style={{ marginTop: 20 }}>
+                      <div className="form-group" style={{ margin: 0, maxWidth: 280 }}>
+                        <label className="form-label">Sale Ends At (IST)</label>
+                        <input
+                          type="datetime-local"
+                          className="form-control"
+                          value={utcIsoToIstLocalInput(section.config?.endDate)}
+                          onChange={e => updateConfig(section.key, { endDate: istLocalInputToUtcIso(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {section.key === 'ad' && (
+                    <div style={{ marginTop: 20 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Banner Background Image</div>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                        The tinted photo behind the text.
+                      </p>
+                      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 24 }}>
+                        <div style={{ width: 160, aspectRatio: '16/9', borderRadius: 8, overflow: 'hidden', background: '#eee', position: 'relative', flexShrink: 0 }}>
+                          {section.config?.image && <img src={section.config.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                          {uploadingAdImage && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <i className="bi bi-hourglass-split"></i>
+                            </div>
+                          )}
+                        </div>
+                        <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer' }}>
+                          <i className="bi bi-upload"></i> {section.config?.image ? 'Replace Image' : 'Upload Image'}
+                          <input type="file" accept="image/*" style={{ display: 'none' }}
+                            onChange={e => handleAdImageUpload(section.key, e.target.files[0])} />
+                        </label>
+                      </div>
+
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Checklist Tags</div>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                        The small checkmarked words under the title (e.g. Sarees, Lehengas...).
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 360 }}>
+                        {getCategories(section.key).map((c, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: 8 }}>
+                            <input className="form-control" value={c} onChange={e => updateCategory(section.key, idx, e.target.value)} />
+                            <button type="button" className="btn btn-outline btn-sm btn-icon" style={{ color: '#d33' }} onClick={() => removeCategory(section.key, idx)}>
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" className="btn btn-outline btn-sm" onClick={() => addCategory(section.key)}>
+                          <i className="bi bi-plus-lg"></i> Add Tag
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {section.key === 'gallery' && (
                     <div style={{ marginTop: 20 }}>
@@ -501,6 +682,66 @@ export function HomepageBuilderPage() {
                           <input type="file" accept="image/*" style={{ display: 'none' }}
                             onChange={e => handleGalleryImageUpload(section.key, normalizeGalleryImages(section.config).length, e.target.files[0])} />
                         </label>
+                      </div>
+                    </div>
+                  )}
+                  {section.key === 'products' && (
+                    <div style={{ marginTop: 20 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Product Rows</div>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                        Each row shows a banner next to a row of products. Pick a category to pull that category's products into the row — leave it blank to show featured products instead.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        {getRows(section.key).map((row, rowIdx) => (
+                          <div key={rowIdx} className="card" style={{ padding: 16 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Row {rowIdx + 1}</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 16 }}>
+                              {/* Banner image */}
+                              <div>
+                                <div style={{ width: '100%', aspectRatio: '4/5', borderRadius: 8, overflow: 'hidden', background: '#eee', marginBottom: 8, position: 'relative' }}>
+                                  {row.banner?.image && <img src={row.banner.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                  {uploadingRowBanner === `${section.key}-${rowIdx}` && (
+                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <i className="bi bi-hourglass-split"></i>
+                                    </div>
+                                  )}
+                                </div>
+                                <label className="btn btn-outline btn-sm" style={{ width: '100%', textAlign: 'center', cursor: 'pointer', display: 'block' }}>
+                                  <i className="bi bi-upload"></i> {row.banner?.image ? 'Replace' : 'Upload'}
+                                  <input type="file" accept="image/*" style={{ display: 'none' }}
+                                    onChange={e => handleRowBannerUpload(section.key, rowIdx, e.target.files[0])} />
+                                </label>
+                              </div>
+
+                              {/* Row fields */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                <div className="form-group" style={{ margin: 0, gridColumn: '1 / -1' }}>
+                                  <label className="form-label">Category (leave blank for Featured Products)</label>
+                                  <select className="form-control" value={row.category || ''} onChange={e => updateRow(section.key, rowIdx, { category: e.target.value })}>
+                                    <option value="">— Featured Products —</option>
+                                    {categoryOptions.map(label => <option key={label} value={label}>{label}</option>)}
+                                  </select>
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                  <label className="form-label"># of Products</label>
+                                  <input type="number" min={1} max={20} className="form-control" value={row.limit || 6} onChange={e => updateRow(section.key, rowIdx, { limit: parseInt(e.target.value) || 6 })} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                  <label className="form-label">Banner Title</label>
+                                  <input className="form-control" value={row.banner?.title || ''} onChange={e => updateRowBanner(section.key, rowIdx, { title: e.target.value })} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                  <label className="form-label">Banner Button Text</label>
+                                  <input className="form-control" value={row.banner?.buttonText || ''} onChange={e => updateRowBanner(section.key, rowIdx, { buttonText: e.target.value })} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                  <label className="form-label">Banner Button Link</label>
+                                  <input className="form-control" value={row.banner?.buttonLink || ''} onChange={e => updateRowBanner(section.key, rowIdx, { buttonLink: e.target.value })} placeholder="/shop?category=..." />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -956,6 +1197,131 @@ export function TestimonialsPage() {
     { key: 'order', label: 'Display Order', type: 'number', default: 0 },
     { key: 'isActive', label: 'Active', type: 'toggle', default: true },
   ]} />;
+}
+
+// ──── CUSTOMER DIARIES (About page photo marquee) ──────────────────
+export function CustomerDiariesPage() {
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ caption: '', isActive: true, order: 0 });
+  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    try { const { data } = await api.get('/customer-diaries/admin/all'); setPhotos(data.data); }
+    catch { } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const openForm = (item = null) => {
+    setEditItem(item);
+    setForm(item ? { caption: item.caption || '', isActive: item.isActive, order: item.order || 0 } : { caption: '', isActive: true, order: photos.length });
+    setImageFile(null);
+    setShowForm(true);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!editItem && !imageFile) { toast.error('Please choose a photo to upload'); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      if (imageFile) fd.append('image', imageFile);
+      if (editItem) await api.put(`/customer-diaries/${editItem._id}`, fd);
+      else await api.post('/customer-diaries', fd);
+      toast.success(editItem ? 'Photo updated!' : 'Photo added!');
+      setShowForm(false); fetch();
+    } catch (err) { toast.error(err.response?.data?.message || 'Save failed'); }
+    finally { setSaving(false); }
+  };
+
+  const remove = async (id) => {
+    if (!confirm('Delete this photo?')) return;
+    try { await api.delete(`/customer-diaries/${id}`); toast.success('Deleted'); fetch(); }
+    catch { toast.error('Delete failed'); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800 }}>Customer Diaries</h1>
+        <button className="btn btn-primary" onClick={() => openForm()}><i className="bi bi-plus-lg"></i> Add Photo</button>
+      </div>
+      <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24 }}>
+        These photos power the scrolling "Customer Diaries" marquee on the About Us page.
+      </p>
+
+      <div className="card">
+        <div style={{ overflowX: 'auto' }}>
+          <table className="admin-table">
+            <thead><tr><th>Photo</th><th>Caption</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              {loading ? Array(4).fill(0).map((_, i) => <tr key={i}>{Array(5).fill(0).map((_, j) => <td key={j}><div className="skeleton" style={{ height: 14 }}></div></td>)}</tr>)
+                : photos.length === 0 ? (
+                  <tr><td colSpan={5}><div className="empty-state"><i className="bi bi-images"></i><h3>No Photos Yet</h3><p>Add photos to populate the About page marquee.</p></div></td></tr>
+                ) : photos.map(p => (
+                  <tr key={p._id}>
+                    <td><img src={p.image} alt={p.caption || 'Customer'} style={{ width: 60, height: 75, objectFit: 'cover', borderRadius: 8 }} /></td>
+                    <td style={{ fontSize: 13 }}>{p.caption || '—'}</td>
+                    <td style={{ fontSize: 13 }}>{p.order}</td>
+                    <td><span className={`badge ${p.isActive ? 'badge-success' : 'badge-gray'}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-outline btn-sm btn-icon" onClick={() => openForm(p)}><i className="bi bi-pencil"></i></button>
+                        <button className="btn btn-danger btn-sm btn-icon" onClick={() => remove(p._id)}><i className="bi bi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontWeight: 700, margin: 0 }}>{editItem ? 'Edit Photo' : 'Add Photo'}</h3>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer' }}>×</button>
+            </div>
+            <form onSubmit={handleSave} style={{ padding: 24 }}>
+              <div className="form-group">
+                <label className="form-label">Photo {!editItem && '*'}</label>
+                {editItem?.image && !imageFile && <img src={editItem.image} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />}
+                {imageFile && <img src={URL.createObjectURL(imageFile)} alt="" style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />}
+                <input type="file" accept="image/*" className="form-control" onChange={e => setImageFile(e.target.files[0])} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Caption (optional)</label>
+                <input className="form-control" value={form.caption} onChange={e => setForm(f => ({ ...f, caption: e.target.value }))} placeholder="e.g. Priya from Mumbai" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Display Order</label>
+                <input type="number" className="form-control" value={form.order} onChange={e => setForm(f => ({ ...f, order: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label className="toggle">
+                  <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} />
+                  <span className="toggle-slider"></span>
+                  <span style={{ fontSize: 13 }}>Active</span>
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ReviewsPage() {

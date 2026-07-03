@@ -13,20 +13,16 @@ import toast from 'react-hot-toast';
 
 // ─── AD BANNER ───────────────────────────────────────────────────
 export function AdSection({ config = {} }) {
-  const [banner, setBanner] = useState(null);
-
-  useEffect(() => {
-    api.get('/banners?type=ad').then(r => {
-      if (r.data.data?.[0]) setBanner(r.data.data[0]);
-    }).catch(() => {});
-  }, []);
-
-  const title = banner?.title || config.title || 'Get 30% Discount On All Hudis!';
-  const subtitle = banner?.subtitle || config.subtitle || 'Trending Products';
-  const btnText = banner?.buttonText || config.buttonText || 'Check Discount';
-  const btnLink = banner?.buttonLink || config.buttonLink || '/shop';
-  const image = banner?.image || config.image || 'https://images.unsplash.com/photo-1638456266087-09b1d160748b?w=700&h=900&fit=crop&crop=faces&q=80&auto=format';
-  const categories = config.categories || ['Sarees', 'Lehengas', 'Kurtis', 'Anarkali', 'Suits'];
+  // This section is fully driven by Admin > Homepage Builder > Advertisement
+  // Banner > Configure. (It used to also check a legacy `/banners?type=ad`
+  // document and let that silently win over the config below, which is why
+  // edits made in the Homepage Builder appeared to do nothing — removed.)
+  const title = config.title || 'Get 30% Discount On All Hudis!';
+  const subtitle = config.subtitle || 'Trending Products';
+  const btnText = config.buttonText || 'Check Discount';
+  const btnLink = config.buttonLink || '/shop';
+  const image = config.image || 'https://images.unsplash.com/photo-1772570824145-e996a55204fb?w=1600&q=70&auto=format&fit=crop';
+  const categories = config.categories?.length ? config.categories : ['Sarees', 'Lehengas', 'Kurtis', 'Anarkali', 'Suits'];
 
   return (
     <div className="ul-container">
@@ -34,12 +30,13 @@ export function AdSection({ config = {} }) {
         {/* background texture layer — the reference's .ul-ad::before rule points
             at a local asset (../img/ad-banner-bg.jpg) that was never bundled
             into this project, so it silently failed to render. Rendered here
-            instead with a real image so the multiply-blend texture shows up. */}
+            instead with a real image (admin-editable) so the multiply-blend
+            texture shows up. */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: 'url(https://images.unsplash.com/photo-1772570824145-e996a55204fb?w=1600&q=70&auto=format&fit=crop)',
+            backgroundImage: `url(${image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             mixBlendMode: 'multiply',

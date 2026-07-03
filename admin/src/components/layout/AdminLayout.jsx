@@ -20,6 +20,7 @@ const NAV = [
     { to: '/blog', label: 'Blog', icon: 'bi-journal-text' },
     { to: '/faqs', label: 'FAQs', icon: 'bi-question-circle' },
     { to: '/testimonials', label: 'Testimonials', icon: 'bi-chat-quote' },
+    { to: '/customer-diaries', label: 'Customer Diaries', icon: 'bi-camera' },
     { to: '/reviews', label: 'Reviews', icon: 'bi-star' },
     { to: '/media', label: 'Media Library', icon: 'bi-folder2-open' },
   ]},

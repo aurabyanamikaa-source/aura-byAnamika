@@ -97,6 +97,15 @@ const mediaSchema = new mongoose.Schema({
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
+// Customer Diary Model (the "Customer Diaries" photo marquee on the About page)
+const customerDiarySchema = new mongoose.Schema({
+  image: { type: String, required: true },
+  imagePublicId: String,
+  caption: { type: String, default: '' },
+  isActive: { type: Boolean, default: true },
+  order: { type: Number, default: 0 },
+}, { timestamps: true });
+
 // Homepage Sections Model
 const homepageSectionSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true },
@@ -112,5 +121,6 @@ module.exports = {
   Settings: mongoose.model('Settings', settingsSchema),
   Menu: mongoose.model('Menu', menuSchema),
   Media: mongoose.model('Media', mediaSchema),
+  CustomerDiary: mongoose.model('CustomerDiary', customerDiarySchema),
   HomepageSection: mongoose.model('HomepageSection', homepageSectionSchema),
 };

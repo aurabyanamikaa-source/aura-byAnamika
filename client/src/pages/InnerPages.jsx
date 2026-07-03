@@ -8,10 +8,9 @@ import { logoutUser } from '../store/slices/authSlice';
 import { selectSettings } from '../store/slices/settingsSlice';
 import toast from 'react-hot-toast';
 
-// Real customer photos would normally be uploaded via Media Library and
-// wired into Settings; using a curated set of stock photos as placeholders
-// for the About page's "Customer Diaries" marquee until that's in place.
-const CUSTOMER_DIARY_PHOTOS = [
+// Fallback stock photos shown only until the admin uploads real customer
+// photos via Admin Panel → Customer Diaries.
+const FALLBACK_CUSTOMER_DIARY_PHOTOS = [
   'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=500&fit=crop',
@@ -151,6 +150,17 @@ export function BlogDetailPage() {
 // ──── ABOUT PAGE ─────────────────────────────────────────────────
 export function AboutPage() {
   const settings = useSelector(selectSettings);
+  const [diaryPhotos, setDiaryPhotos] = useState(FALLBACK_CUSTOMER_DIARY_PHOTOS);
+
+  useEffect(() => {
+    api.get('/customer-diaries')
+      .then(r => {
+        const photos = (r.data.data || []).map(p => p.image);
+        if (photos.length > 0) setDiaryPhotos(photos);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <Helmet><title>About Us - Aura by Anamika</title></Helmet>
@@ -192,9 +202,9 @@ export function AboutPage() {
 
       <div className="ul-customer-diaries">
         <div className="ul-customer-diaries-track">
-          {[...CUSTOMER_DIARY_PHOTOS, ...CUSTOMER_DIARY_PHOTOS].map((src, i) => (
+          {[...diaryPhotos, ...diaryPhotos].map((src, i) => (
             <div className="ul-customer-diaries-item" key={i}>
-              <img src={src} alt={`Customer ${(i % CUSTOMER_DIARY_PHOTOS.length) + 1}`} />
+              <img src={src} alt={`Customer ${(i % diaryPhotos.length) + 1}`} />
             </div>
           ))}
         </div>

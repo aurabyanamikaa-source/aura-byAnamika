@@ -21,6 +21,7 @@ import MediaPage from './pages/media/MediaPage';
 import CouponsPage from './pages/coupons/CouponsPage';
 import FaqsPage from './pages/faqs/FaqsPage';
 import TestimonialsPage from './pages/testimonials/TestimonialsPage';
+import CustomerDiariesPage from './pages/customerDiaries/CustomerDiariesPage';
 import ReviewsPage from './pages/reviews/ReviewsPage';
 
 function RequireAuth({ children }) {
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="coupons" element={<CouponsPage />} />
           <Route path="faqs" element={<FaqsPage />} />
           <Route path="testimonials" element={<TestimonialsPage />} />
+          <Route path="customer-diaries" element={<CustomerDiariesPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

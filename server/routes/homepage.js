@@ -6,8 +6,32 @@ const { HomepageSection } = require('../models/index');
 const DEFAULT_SECTIONS = [
   { key: 'hero', label: 'Hero Slider', isEnabled: true, order: 0, config: { title: 'Summer Collection', subtitle: 'New Arrivals' } },
   { key: 'categories', label: 'Featured Categories', isEnabled: true, order: 1, config: { title: 'Shop by Category', subtitle: 'Collections' } },
-  { key: 'products', label: 'Featured Products', isEnabled: true, order: 2, config: { title: 'Shopping Every Day', subtitle: 'Summer collection', tabLabels: ['All', 'Men', 'Women', 'Accessories'] } },
-  { key: 'ad', label: 'Advertisement Banner', isEnabled: true, order: 3, config: { title: 'Get 30% Discount On All Hudis!', subtitle: 'LIMITED TIME OFFER', buttonText: 'Shop Now', buttonLink: '/shop' } },
+  { key: 'products', label: 'Featured Products', isEnabled: true, order: 2, config: {
+    title: 'Shopping Every Day',
+    subtitle: 'Summer collection',
+    buttonText: 'More Collection',
+    buttonLink: '/shop',
+    rows: [
+      {
+        category: '',
+        limit: 6,
+        banner: { image: '', title: 'Trending Now Only This Weekend!', buttonText: 'Shop Now', buttonLink: '/shop' },
+      },
+      {
+        category: '',
+        limit: 6,
+        banner: { image: '', title: 'Trending Now Only This Weekend!', buttonText: 'Shop Now', buttonLink: '/shop' },
+      },
+    ],
+  } },
+  { key: 'ad', label: 'Advertisement Banner', isEnabled: true, order: 3, config: {
+    title: 'Get 30% Discount On All Hudis!',
+    subtitle: 'Trending Products',
+    buttonText: 'Check Discount',
+    buttonLink: '/shop',
+    image: 'https://images.unsplash.com/photo-1772570824145-e996a55204fb?w=1600&q=70&auto=format&fit=crop',
+    categories: ['Sarees', 'Lehengas', 'Kurtis', 'Anarkali', 'Suits'],
+  } },
   { key: 'mostSelling', label: 'Most Selling Products', isEnabled: true, order: 4, config: { title: 'Top selling Categories This Week', subtitle: 'most selling items' } },
   { key: 'video', label: 'Video Section', isEnabled: true, order: 5, config: { videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', title: 'Our Story' } },
   { key: 'subBanners', label: 'Sub Banners', isEnabled: true, order: 6, config: {} },
