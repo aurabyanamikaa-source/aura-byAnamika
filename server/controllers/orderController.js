@@ -2,6 +2,20 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
 const User = require('../models/User');
+const { Settings } = require('../models/index');
+
+// Reads the live commerce settings (tax rate, free shipping threshold, shipping cost)
+// instead of relying on hardcoded USD-era defaults.
+const getCommerceSettings = async () => {
+  const rows = await Settings.find({ key: { $in: ['tax_rate', 'free_shipping_threshold', 'shipping_cost'] } }).lean();
+  const map = {};
+  rows.forEach(r => (map[r.key] = r.value));
+  return {
+    taxRate: Number(map.tax_rate ?? 8),
+    freeShippingThreshold: Number(map.free_shipping_threshold ?? 100),
+    shippingCost: Number(map.shipping_cost ?? 9.99),
+  };
+};
 
 // @desc   Create order
 // @route  POST /api/orders
@@ -51,8 +65,9 @@ const createOrder = async (req, res) => {
     }
   }
 
-  const shippingCost = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
+  const { taxRate, freeShippingThreshold, shippingCost: baseShippingCost } = await getCommerceSettings();
+  const shippingCost = subtotal >= freeShippingThreshold ? 0 : baseShippingCost;
+  const tax = subtotal * (taxRate / 100);
   const total = subtotal + shippingCost + tax - discount;
 
   const order = await Order.create({

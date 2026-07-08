@@ -18,7 +18,7 @@ export default function CartDrawer() {
   const dispatch = useDispatch();
   const items = useSelector(selectCartItems);
   const subtotal = useSelector(selectCartSubtotal);
-  const { currency_symbol = '$' } = useSelector(selectSettings);
+  const { currency_symbol = '$', free_shipping_threshold = 100 } = useSelector(selectSettings);
   const fmt = n => `${currency_symbol}${Number(n).toFixed(2)}`;
 
   return (
@@ -153,7 +153,7 @@ export default function CartDrawer() {
               <span style={{ fontWeight: 700, color: '#000', fontSize: 18 }}>{fmt(subtotal)}</span>
             </div>
             <p style={{ fontSize: 12, color: '#999', margin: '4px 0 16px' }}>
-              {subtotal >= 100 ? '🎉 You qualify for free shipping!' : `Add ${fmt(100 - subtotal)} more for free shipping`}
+              {subtotal >= free_shipping_threshold ? '🎉 You qualify for free shipping!' : `Add ${fmt(free_shipping_threshold - subtotal)} more for free shipping`}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Link

@@ -55,7 +55,8 @@ const getPublicSettings = async (req, res) => {
     'store_email', 'store_phone', 'store_address', 'facebook_url', 'twitter_url', 'instagram_url',
     'youtube_url', 'linkedin_url', 'gmb_url', 'currency', 'currency_symbol', 'announcement_text',
     'phone_1', 'phone_2', 'sidebar_about_text',
-    'newsletter_title', 'newsletter_subtitle', 'footer_copyright', 'meta_title', 'meta_description'];
+    'newsletter_title', 'newsletter_subtitle', 'footer_copyright', 'meta_title', 'meta_description',
+    'tax_rate', 'free_shipping_threshold', 'shipping_cost'];
   let settings = await Settings.find({ key: { $in: publicKeys } }).lean();
   const map = {};
   settings.forEach(s => (map[s.key] = s.value));

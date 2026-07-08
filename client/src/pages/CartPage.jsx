@@ -17,7 +17,7 @@ export default function CartPage() {
   const items = useSelector(selectCartItems);
   const { subtotal, discount, shipping, tax, total } = useSelector(selectCartTotal);
   const coupon = useSelector(selectCoupon);
-  const { currency_symbol = '$' } = useSelector(selectSettings);
+  const { currency_symbol = '$', tax_rate = 8, free_shipping_threshold = 100 } = useSelector(selectSettings);
   const { user } = useSelector(s => s.auth);
 
   const [couponCode, setCouponCode] = useState('');
@@ -181,12 +181,12 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15 }}>
-                    <span style={{ color: '#666' }}>Tax (8%)</span>
+                    <span style={{ color: '#666' }}>Tax ({tax_rate}%)</span>
                     <span>{fmt(tax)}</span>
                   </div>
                   {shipping > 0 && (
                     <div style={{ fontSize: 13, color: '#EF2853', textAlign: 'right' }}>
-                      Add {fmt(100 - subtotal)} more for free shipping!
+                      Add {fmt(free_shipping_threshold - subtotal)} more for free shipping!
                     </div>
                   )}
                   <div style={{ borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: 14, display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 18 }}>

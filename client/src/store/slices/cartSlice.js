@@ -75,8 +75,17 @@ export const selectCartTotal = state => {
   const subtotal = selectCartSubtotal(state);
   const coupon = state.cart.coupon;
   const discount = coupon ? coupon.discount : 0;
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
+
+  // Pull live commerce settings (set in Admin > Settings > Commerce) instead of
+  // hardcoding USD-era values ($100 threshold / $9.99 shipping / 8% tax), which
+  // is what caused free shipping to trigger incorrectly after switching to INR.
+  const settings = state.settings?.data || {};
+  const freeShippingThreshold = Number(settings.free_shipping_threshold ?? 100);
+  const shippingCost = Number(settings.shipping_cost ?? 9.99);
+  const taxRate = Number(settings.tax_rate ?? 8);
+
+  const shipping = subtotal >= freeShippingThreshold ? 0 : shippingCost;
+  const tax = subtotal * (taxRate / 100);
   return { subtotal, discount, shipping, tax, total: subtotal - discount + shipping + tax };
 };
 
