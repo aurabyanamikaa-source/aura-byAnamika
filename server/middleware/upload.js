@@ -18,6 +18,12 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
 
+// Product images only: no file size cap (still images-only via fileFilter).
+const uploadProductImage = multer({
+  storage,
+  fileFilter,
+});
+
 // Video uploads (e.g. the homepage "Our Videos" reel marquee) need their
 // own filter + a much higher size ceiling than photos.
 const videoFileFilter = (req, file, cb) => {
@@ -66,4 +72,4 @@ const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
   }
 };
 
-module.exports = { upload, uploadVideo, uploadToCloudinary, uploadVideoToCloudinary, deleteFromCloudinary };
+module.exports = { upload, uploadProductImage, uploadVideo, uploadToCloudinary, uploadVideoToCloudinary, deleteFromCloudinary };

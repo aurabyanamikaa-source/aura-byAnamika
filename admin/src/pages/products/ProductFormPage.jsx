@@ -398,7 +398,7 @@ export default function ProductFormPage() {
                   >
                     <i className={`bi ${uploadingImages ? 'bi-hourglass-split' : 'bi-cloud-arrow-up'}`}></i>
                     <p style={{ fontWeight: 500, marginBottom: 4 }}>{uploadingImages ? 'Uploading...' : 'Click to upload images'}</p>
-                    <p style={{ fontSize: 12, color: 'var(--muted)' }}>PNG, JPG, WEBP up to 10MB each. Multiple allowed.</p>
+                    <p style={{ fontSize: 12, color: 'var(--muted)' }}>PNG, JPG, WEBP. Any size. Multiple allowed.</p>
                   </div>
                   <input id="img-upload" type="file" multiple accept="image/*" style={{ display: 'none' }}
                     onChange={e => handleImageUpload(e.target.files)} />
