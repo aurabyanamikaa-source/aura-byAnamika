@@ -326,7 +326,7 @@ export default function ProductFormPage() {
                       <span style={{ color: '#16a34a', fontWeight: 600 }}>
                         Discount: {Math.round(((form.price - form.salePrice) / form.price) * 100)}% off
                       </span>
-                      <span style={{ color: '#666', marginLeft: 12, fontSize: 13 }}>Customer saves ${(form.price - form.salePrice).toFixed(2)}</span>
+                      <span style={{ color: '#666', marginLeft: 12, fontSize: 13 }}>Customer saves ₹{(form.price - form.salePrice).toFixed(2)}</span>
                     </div>
                   )}
                 </div>

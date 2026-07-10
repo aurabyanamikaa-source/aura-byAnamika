@@ -128,10 +128,10 @@ export default function ProductsPage() {
                   <td><span style={{ fontSize: 13 }}>{product.categories?.length ? product.categories.map(c => c.label).join(', ') : '—'}</span></td>
                   <td>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>
-                      ${(product.salePrice || product.price)?.toFixed(2)}
+                      ₹{(product.salePrice || product.price)?.toFixed(2)}
                     </div>
                     {product.salePrice && (
-                      <div style={{ fontSize: 11, color: '#999', textDecoration: 'line-through' }}>${product.price?.toFixed(2)}</div>
+                      <div style={{ fontSize: 11, color: '#999', textDecoration: 'line-through' }}>₹{product.price?.toFixed(2)}</div>
                     )}
                   </td>
                   <td>

@@ -71,7 +71,7 @@ export default function Dashboard() {
   }, []);
 
   const statusColor = { pending: 'warning', processing: 'info', shipped: 'purple', delivered: 'success', cancelled: 'danger' };
-  const fmt = n => `$${Number(n || 0).toFixed(2)}`;
+  const fmt = n => `₹${Number(n || 0).toFixed(2)}`;
 
   const pieData = [
     { name: 'Delivered', value: recentOrders.filter(o => o.status === 'delivered').length },
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <StatCard icon="bi-currency-dollar" label="Total Revenue" value={fmt(stats.revenue)} change={12} color="#EF2853" bg="rgba(239,40,83,0.1)" />
+        <StatCard icon="bi-currency-rupee" label="Total Revenue" value={fmt(stats.revenue)} change={12} color="#EF2853" bg="rgba(239,40,83,0.1)" />
         <StatCard icon="bi-bag-check" label="Total Orders" value={stats.orders || 0} change={8} color="#3b82f6" bg="rgba(59,130,246,0.1)" />
         <StatCard icon="bi-clock-history" label="Pending Orders" value={stats.pending || 0} color="#f97316" bg="rgba(249,115,22,0.1)" />
         <StatCard icon="bi-box-seam" label="Total Products" value={stats.products || 0} color="#8b5cf6" bg="rgba(139,92,246,0.1)" />
@@ -118,8 +118,8 @@ export default function Dashboard() {
                 <LineChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={4} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                  <Tooltip formatter={v => [`$${v}`, 'Revenue']} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `₹${v}`} />
+                  <Tooltip formatter={v => [`₹${v}`, 'Revenue']} />
                   <Line type="monotone" dataKey="revenue" stroke="#EF2853" strokeWidth={2.5} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -205,7 +205,7 @@ export default function Dashboard() {
                   <div style={{ fontWeight: 500, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</div>
                   <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>{product.soldCount || 0} sold</div>
                 </div>
-                <div style={{ fontWeight: 700, color: '#EF2853', fontSize: 14 }}>${(product.salePrice || product.price)?.toFixed(2)}</div>
+                <div style={{ fontWeight: 700, color: '#EF2853', fontSize: 14 }}>₹{(product.salePrice || product.price)?.toFixed(2)}</div>
               </div>
             ))}
             {topProducts.length === 0 && (

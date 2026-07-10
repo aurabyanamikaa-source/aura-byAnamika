@@ -112,7 +112,7 @@ export function OrdersPage() {
                   <td><span style={{ fontSize: 13 }}>{order.items?.length} items</span></td>
                   <td><span className={`badge ${STATUS_MAP[order.status] || 'badge-gray'}`}>{order.status}</span></td>
                   <td><span className={`badge ${order.paymentStatus === 'paid' ? 'badge-success' : 'badge-warning'}`}>{order.paymentStatus}</span></td>
-                  <td><span style={{ fontWeight: 700, fontSize: 14 }}>${order.total?.toFixed(2)}</span></td>
+                  <td><span style={{ fontWeight: 700, fontSize: 14 }}>₹{order.total?.toFixed(2)}</span></td>
                   <td><span style={{ fontSize: 12, color: 'var(--muted)' }}>{new Date(order.createdAt).toLocaleDateString()}</span></td>
                   <td>
                     <Link to={`/orders/${order._id}`} className="btn btn-outline btn-sm btn-icon" title="View"><i className="bi bi-eye"></i></Link>
@@ -190,9 +190,9 @@ export function OrderDetailPage() {
                           <div style={{ fontSize: 11, color: 'var(--muted)' }}>{item.size && `Size: ${item.size}`} {item.color && `· Color: ${item.color}`}</div>
                         </div>
                       </div></td>
-                      <td>${item.price?.toFixed(2)}</td>
+                      <td>₹{item.price?.toFixed(2)}</td>
                       <td>×{item.quantity}</td>
-                      <td style={{ fontWeight: 600 }}>${(item.price * item.quantity)?.toFixed(2)}</td>
+                      <td style={{ fontWeight: 600 }}>₹{(item.price * item.quantity)?.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -202,11 +202,11 @@ export function OrderDetailPage() {
               {[['Subtotal', order.subtotal], ['Shipping', order.shippingCost], ['Tax', order.tax], ['Discount', order.discount ? -order.discount : null]].map(([label, val]) => val != null && val !== 0 && (
                 <div key={label} style={{ display: 'flex', gap: 40, fontSize: 14 }}>
                   <span style={{ color: 'var(--muted)' }}>{label}</span>
-                  <span style={{ color: label === 'Discount' ? '#22c55e' : undefined }}>{label === 'Discount' ? '-' : ''}${Math.abs(val)?.toFixed(2)}</span>
+                  <span style={{ color: label === 'Discount' ? '#22c55e' : undefined }}>{label === 'Discount' ? '-' : ''}₹{Math.abs(val)?.toFixed(2)}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 40, fontWeight: 700, fontSize: 16, borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 4 }}>
-                <span>Total</span><span style={{ color: 'var(--primary)' }}>${order.total?.toFixed(2)}</span>
+                <span>Total</span><span style={{ color: 'var(--primary)' }}>₹{order.total?.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -508,7 +508,7 @@ export function SettingsPage() {
     branding: [{ key: 'logo', label: 'Logo URL', type: 'text' }, { key: 'logo_white', label: 'Logo (White) URL', type: 'text' }, { key: 'favicon', label: 'Favicon URL', type: 'text' }, { key: 'primary_color', label: 'Primary Color', type: 'color' }, { key: 'secondary_color', label: 'Secondary Color', type: 'color' }],
     contact: [{ key: 'store_email', label: 'Email', type: 'text' }, { key: 'phone_1', label: 'Phone 1', type: 'text' }, { key: 'phone_2', label: 'Phone 2', type: 'text' }, { key: 'store_address', label: 'Address', type: 'text' }],
     social: [{ key: 'facebook_url', label: 'Facebook URL', type: 'text' }, { key: 'twitter_url', label: 'Twitter/X URL', type: 'text' }, { key: 'instagram_url', label: 'Instagram URL', type: 'text' }, { key: 'youtube_url', label: 'YouTube URL', type: 'text' }, { key: 'linkedin_url', label: 'LinkedIn URL', type: 'text' }, { key: 'gmb_url', label: 'Google My Business URL', type: 'text' }],
-    commerce: [{ key: 'currency', label: 'Currency Code (e.g. USD)', type: 'text' }, { key: 'currency_symbol', label: 'Currency Symbol', type: 'text' }, { key: 'tax_rate', label: 'Tax Rate (%)', type: 'number' }, { key: 'free_shipping_threshold', label: 'Free Shipping Above ($)', type: 'number' }, { key: 'shipping_cost', label: 'Shipping Cost ($)', type: 'number' }],
+    commerce: [{ key: 'currency', label: 'Currency Code (e.g. INR)', type: 'text' }, { key: 'currency_symbol', label: 'Currency Symbol', type: 'text' }, { key: 'tax_rate', label: 'Tax Rate (%)', type: 'number' }, { key: 'free_shipping_threshold', label: 'Free Shipping Above (₹)', type: 'number' }, { key: 'shipping_cost', label: 'Shipping Cost (₹)', type: 'number' }],
     marketing: [{ key: 'announcement_text', label: 'Announcement Bar Text', type: 'text' }, { key: 'newsletter_title', label: 'Newsletter Title', type: 'text' }, { key: 'newsletter_subtitle', label: 'Newsletter Subtitle', type: 'text' }, { key: 'footer_copyright', label: 'Footer Copyright', type: 'text' }],
     seo: [{ key: 'meta_title', label: 'Default Meta Title', type: 'text' }, { key: 'meta_description', label: 'Default Meta Description', type: 'textarea' }],
   };

@@ -965,8 +965,8 @@ export function CouponsPage() {
                   <tr key={c._id}>
                     <td><span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', fontSize: 13 }}>{c.code}</span></td>
                     <td><span className={`badge ${c.type === 'percentage' ? 'badge-info' : 'badge-purple'}`}>{c.type}</span></td>
-                    <td style={{ fontWeight: 600 }}>{c.type === 'percentage' ? `${c.value}%` : `$${c.value}`}</td>
-                    <td style={{ fontSize: 13 }}>${c.minOrderValue || 0}</td>
+                    <td style={{ fontWeight: 600 }}>{c.type === 'percentage' ? `${c.value}%` : `₹${c.value}`}</td>
+                    <td style={{ fontSize: 13 }}>₹{c.minOrderValue || 0}</td>
                     <td style={{ fontSize: 13 }}>{c.usedCount || 0}{c.usageLimit ? ` / ${c.usageLimit}` : ''}</td>
                     <td style={{ fontSize: 12, color: 'var(--muted)' }}>{c.expiryDate ? new Date(c.expiryDate).toLocaleDateString() : 'Never'}</td>
                     <td><span className={`badge ${c.isActive ? 'badge-success' : 'badge-gray'}`}>{c.isActive ? 'Active' : 'Inactive'}</span></td>
