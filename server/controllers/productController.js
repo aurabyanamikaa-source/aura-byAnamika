@@ -123,8 +123,12 @@ const uploadProductImages = async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
 
-  const uploadedImages = [];
-  for (const file of req.files) {
+  // Run all files through sharp + Cloudinary concurrently rather than one at
+  // a time — sequential processing meant total time scaled with file count,
+  // which on a slow/cold Render free-tier instance easily pushed multi-image
+  // uploads past the client's timeout even though every image would have
+  // eventually succeeded.
+  const uploadedImages = await Promise.all(req.files.map(async (file) => {
     // .rotate() with no args reads the EXIF orientation tag (set by phone
     // cameras held sideways/upside down) and bakes it into the actual pixels
     // before we resize/compress — otherwise that tag gets lost and the
@@ -136,8 +140,8 @@ const uploadProductImages = async (req, res) => {
       .toBuffer();
 
     const result = await uploadToCloudinary(optimizedBuffer, 'products');
-    uploadedImages.push({ url: result.secure_url, publicId: result.public_id, alt: product.name });
-  }
+    return { url: result.secure_url, publicId: result.public_id, alt: product.name };
+  }));
 
   product.images.push(...uploadedImages);
   if (!product.thumbnail && uploadedImages.length > 0) {

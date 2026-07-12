@@ -102,7 +102,20 @@ export default function ProductFormPage() {
       const { data } = await api.post(`/products/${id}/images`, fd);
       set('images', data.data);
       toast.success(`${files.length} image(s) uploaded`);
-    } catch { toast.error('Image upload failed'); }
+    } catch (err) {
+      if (err.code === 'ECONNABORTED') {
+        // The request timed out client-side, but the server may well have
+        // finished the job after we stopped waiting — re-fetch the product
+        // so a genuinely completed upload shows up without a manual refresh.
+        toast.error('Upload is taking longer than expected — checking if it finished...');
+        try {
+          const { data } = await api.get(`/products/${id}`);
+          if (data.data?.images) set('images', data.data.images);
+        } catch { /* ignore — leave existing state as-is */ }
+      } else {
+        toast.error(err.response?.data?.message || 'Image upload failed');
+      }
+    }
     finally { setUploadingImages(false); }
   };
 

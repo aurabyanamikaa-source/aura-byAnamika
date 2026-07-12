@@ -13,14 +13,16 @@ router.get('/', protect, admin, async (req, res) => {
 
 router.post('/upload', protect, admin, upload.array('files', 20), async (req, res) => {
   const folder = req.body.folder || 'general';
-  const uploaded = [];
-  for (const file of req.files) {
+  // Process files concurrently — sequential processing meant total time
+  // scaled with file count, which could push multi-file uploads past the
+  // client timeout on a slow/cold server instance.
+  const uploaded = await Promise.all(req.files.map(async (file) => {
     const result = await uploadToCloudinary(file.buffer, folder, {
       resource_type: 'image',
       quality: 'auto',
       fetch_format: 'auto',
     });
-    const media = await Media.create({
+    return Media.create({
       name: file.originalname.replace(/\.[^/.]+$/, ''),
       originalName: file.originalname,
       url: result.secure_url,
@@ -33,8 +35,7 @@ router.post('/upload', protect, admin, upload.array('files', 20), async (req, re
       folder,
       uploadedBy: req.user._id,
     });
-    uploaded.push(media);
-  }
+  }));
   res.status(201).json({ success: true, data: uploaded });
 });
 
