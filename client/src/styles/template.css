@@ -2248,6 +2248,60 @@ button {
   display: block;
   text-decoration: none;
   cursor: pointer;
+  position: relative;
+}
+
+/* Small "tap to watch" play badge on every reel thumbnail, so it's obvious
+   at a glance that these clips are clickable (mirrors Instagram's own reel
+   affordance). Always visible, slightly larger on hover for feedback. */
+.ul-video-play-hint {
+  position: absolute;
+  right: clamp(8px, 0.8vw, 14px);
+  bottom: clamp(8px, 0.8vw, 14px);
+  width: clamp(28px, 2.4vw, 38px);
+  height: clamp(28px, 2.4vw, 38px);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 1.2vw, 18px);
+  pointer-events: none;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.ul-video-item-inner:hover .ul-video-play-hint {
+  transform: scale(1.12);
+  background: #EF2853;
+}
+
+/* "Follow Us @handle" heading — doubles as an Instagram link when the admin
+   has set a store Instagram URL in Settings > Social Media. */
+.ul-insta-follow-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.ul-insta-follow-link {
+  cursor: pointer;
+}
+
+a.ul-insta-follow-link:hover {
+  color: #EF2853;
+}
+
+.ul-insta-follow-link i.bi-instagram {
+  font-size: 0.8em;
+  background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .ul-video-item video {

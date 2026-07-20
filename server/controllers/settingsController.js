@@ -31,6 +31,26 @@ const DEFAULT_SETTINGS = {
   footer_copyright: { value: 'Copyright 2024 © Aura by Anamika', group: 'footer', label: 'Footer Copyright', type: 'text' },
   meta_title: { value: 'Aura by Anamika - Premium Fashion & Apparel', group: 'seo', label: 'Default Meta Title', type: 'text' },
   meta_description: { value: 'Shop the latest fashion trends at Aura by Anamika. Premium quality clothing, accessories and more.', group: 'seo', label: 'Default Meta Description', type: 'text' },
+
+  // About Us page — fully editable from Admin > About Page, including the image.
+  about_image: { value: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=700&h=500&fit=crop', group: 'about', label: 'About Image', type: 'image' },
+  about_subtitle: { value: 'Our Story', group: 'about', label: 'Subtitle', type: 'text' },
+  about_title: { value: 'Premium Fashion for the Modern World', group: 'about', label: 'Title', type: 'text' },
+  about_paragraph_1: { value: 'Founded with a passion for style and quality, Aura by Anamika has been bringing premium fashion to discerning customers worldwide. We believe fashion should be accessible, sustainable, and above all — beautiful.', group: 'about', label: 'Paragraph 1', type: 'text' },
+  about_paragraph_2: { value: 'Our curated collections span everything from everyday essentials to statement pieces for special occasions. Every product is carefully selected for quality, style, and value.', group: 'about', label: 'Paragraph 2', type: 'text' },
+  about_stats: {
+    value: [
+      { num: '50K+', label: 'Happy Customers' },
+      { num: '5K+', label: 'Products' },
+      { num: '100+', label: 'Brands' },
+      { num: '50+', label: 'Countries' },
+    ],
+    group: 'about', label: 'Stats', type: 'json',
+  },
+  about_button_text: { value: 'Shop Our Collection', group: 'about', label: 'Button Text', type: 'text' },
+  about_button_link: { value: '/shop', group: 'about', label: 'Button Link', type: 'text' },
+  about_diaries_subtitle: { value: 'Customer Diaries', group: 'about', label: 'Diaries Subtitle', type: 'text' },
+  about_diaries_title: { value: 'Our Happy Customers', group: 'about', label: 'Diaries Title', type: 'text' },
 };
 
 // @desc   Get all settings
@@ -45,6 +65,10 @@ const getSettings = async (req, res) => {
   // Convert to key-value map
   const map = {};
   settings.forEach(s => (map[s.key] = s.value));
+  // Backfill any keys added to DEFAULT_SETTINGS after this install was first
+  // seeded, so they show up in the admin UI right away instead of looking
+  // like they don't exist until someone happens to save them once.
+  Object.entries(DEFAULT_SETTINGS).forEach(([k, def]) => { if (!(k in map)) map[k] = def.value; });
   res.json({ success: true, data: map });
 };
 
@@ -56,7 +80,9 @@ const getPublicSettings = async (req, res) => {
     'youtube_url', 'linkedin_url', 'gmb_url', 'currency', 'currency_symbol', 'announcement_text',
     'phone_1', 'phone_2', 'sidebar_about_text',
     'newsletter_title', 'newsletter_subtitle', 'footer_copyright', 'meta_title', 'meta_description',
-    'tax_rate', 'free_shipping_threshold', 'shipping_cost'];
+    'tax_rate', 'free_shipping_threshold', 'shipping_cost',
+    'about_image', 'about_subtitle', 'about_title', 'about_paragraph_1', 'about_paragraph_2',
+    'about_stats', 'about_button_text', 'about_button_link', 'about_diaries_subtitle', 'about_diaries_title'];
   let settings = await Settings.find({ key: { $in: publicKeys } }).lean();
   const map = {};
   settings.forEach(s => (map[s.key] = s.value));

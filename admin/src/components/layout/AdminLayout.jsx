@@ -22,6 +22,7 @@ const NAV = [
     { to: '/testimonials', label: 'Testimonials', icon: 'bi-chat-quote' },
     { to: '/customer-diaries', label: 'Customer Diaries', icon: 'bi-camera' },
     { to: '/reviews', label: 'Reviews', icon: 'bi-star' },
+    { to: '/about-page', label: 'About Page', icon: 'bi-info-circle' },
     { to: '/media', label: 'Media Library', icon: 'bi-folder2-open' },
   ]},
   { group: 'Users', items: [

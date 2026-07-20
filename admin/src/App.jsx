@@ -23,6 +23,7 @@ import FaqsPage from './pages/faqs/FaqsPage';
 import TestimonialsPage from './pages/testimonials/TestimonialsPage';
 import CustomerDiariesPage from './pages/customerDiaries/CustomerDiariesPage';
 import ReviewsPage from './pages/reviews/ReviewsPage';
+import AboutPage from './pages/about/AboutPage';
 
 function RequireAuth({ children }) {
   const { admin, token, initialized } = useSelector(s => s.auth);
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="testimonials" element={<TestimonialsPage />} />
           <Route path="customer-diaries" element={<CustomerDiariesPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
+          <Route path="about-page" element={<AboutPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

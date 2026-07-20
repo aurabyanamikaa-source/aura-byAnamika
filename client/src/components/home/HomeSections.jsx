@@ -464,6 +464,10 @@ export function BlogSection({ config = {} }) {
 export function GallerySection({ config = {} }) {
   const videos = config.videos || [];
   const trackRef = useRef(null);
+  const { instagram_url = '' } = useSelector(s => s.settings.data);
+  // Only treat it as a real link if the admin has actually set one —
+  // Settings defaults this to '#' when untouched, which shouldn't be clickable.
+  const hasInstagramLink = instagram_url && instagram_url !== '#';
 
   // Play a reel when it scrolls into view, pause it when it scrolls out —
   // same approach as the Ritu Ghai reference site, so we're not running
@@ -510,7 +514,22 @@ export function GallerySection({ config = {} }) {
           <div className="ul-section-heading" style={{ justifyContent: 'center', textAlign: 'center' }}>
             <div>
               <span className="ul-section-sub-title">{config.subtitle || 'Watch our latest collections'}</span>
-              <h2 className="ul-section-title">{config.title || 'Our Videos'}</h2>
+              {hasInstagramLink ? (
+                <a
+                  href={instagram_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ul-section-title ul-insta-follow-link"
+                >
+                  <i className="bi bi-instagram"></i>
+                  {config.title || 'Our Videos'}
+                </a>
+              ) : (
+                <h2 className="ul-section-title ul-insta-follow-link">
+                  <i className="bi bi-instagram"></i>
+                  {config.title || 'Our Videos'}
+                </h2>
+              )}
             </div>
           </div>
         </div>
@@ -528,6 +547,11 @@ export function GallerySection({ config = {} }) {
                 <div className="ul-video-item" key={i}>
                   <Wrapper {...wrapperProps} className="ul-video-item-inner">
                     <video src={item.video} muted playsInline loop preload="metadata" />
+                    {/* Hints that the reel is tappable — matches how IG itself
+                        signals "there's more here, go watch it". */}
+                    <span className="ul-video-play-hint" aria-hidden="true">
+                      <i className="bi bi-play-fill"></i>
+                    </span>
                     {item.caption && <div className="ul-video-caption">{item.caption}</div>}
                   </Wrapper>
                 </div>

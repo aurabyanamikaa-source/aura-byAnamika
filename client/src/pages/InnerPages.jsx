@@ -148,6 +148,15 @@ export function BlogDetailPage() {
 }
 
 // ──── ABOUT PAGE ─────────────────────────────────────────────────
+// Fallback stats shown only until the admin sets their own via
+// Admin Panel → About Page.
+const FALLBACK_ABOUT_STATS = [
+  { num: '50K+', label: 'Happy Customers' },
+  { num: '5K+', label: 'Products' },
+  { num: '100+', label: 'Brands' },
+  { num: '50+', label: 'Countries' },
+];
+
 export function AboutPage() {
   const settings = useSelector(selectSettings);
   const [diaryPhotos, setDiaryPhotos] = useState(FALLBACK_CUSTOMER_DIARY_PHOTOS);
@@ -161,6 +170,20 @@ export function AboutPage() {
       .catch(() => {});
   }, []);
 
+  // Every piece of this page — image, story copy, stats, button, and the
+  // Customer Diaries heading — is editable from Admin Panel → About Page.
+  const aboutImage = settings.about_image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=700&h=500&fit=crop';
+  const aboutSubtitle = settings.about_subtitle || 'Our Story';
+  const aboutTitle = settings.about_title || 'Premium Fashion for the Modern World';
+  const aboutParagraph1 = settings.about_paragraph_1 || `Founded with a passion for style and quality, ${settings.store_name || 'Aura by Anamika'} has been bringing premium fashion to discerning customers worldwide. We believe fashion should be accessible, sustainable, and above all — beautiful.`;
+  const aboutParagraph2 = settings.about_paragraph_2 || 'Our curated collections span everything from everyday essentials to statement pieces for special occasions. Every product is carefully selected for quality, style, and value.';
+  const aboutStats = Array.isArray(settings.about_stats) && settings.about_stats.length > 0 ? settings.about_stats : FALLBACK_ABOUT_STATS;
+  const aboutButtonText = settings.about_button_text || 'Shop Our Collection';
+  const aboutButtonLink = settings.about_button_link || '/shop';
+  const diariesSubtitle = settings.about_diaries_subtitle || 'Customer Diaries';
+  const diariesTitle = settings.about_diaries_title || 'Our Happy Customers';
+  const isButtonInternal = aboutButtonLink.startsWith('/');
+
   return (
     <>
       <Helmet><title>About Us - Aura by Anamika</title></Helmet>
@@ -168,19 +191,19 @@ export function AboutPage() {
       <div className="ul-inner-page-container">
         <div className="row ul-bs-row align-items-center" style={{ marginBottom: 60 }}>
           <div className="col-lg-6">
-            <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=700&h=500&fit=crop" alt="About Aura by Anamika" style={{ borderRadius: 24, width: '100%' }} />
+            <img src={aboutImage} alt="About Aura by Anamika" style={{ borderRadius: 24, width: '100%' }} />
           </div>
           <div className="col-lg-6">
-            <span className="ul-section-sub-title">Our Story</span>
-            <h2 className="ul-section-title" style={{ marginBottom: 20 }}>Premium Fashion for the Modern World</h2>
+            <span className="ul-section-sub-title">{aboutSubtitle}</span>
+            <h2 className="ul-section-title" style={{ marginBottom: 20 }}>{aboutTitle}</h2>
             <p style={{ color: '#555', lineHeight: 1.9, fontSize: 15, marginBottom: 16 }}>
-              Founded with a passion for style and quality, {settings.store_name || 'Aura by Anamika'} has been bringing premium fashion to discerning customers worldwide. We believe fashion should be accessible, sustainable, and above all — beautiful.
+              {aboutParagraph1}
             </p>
             <p style={{ color: '#555', lineHeight: 1.9, fontSize: 15, marginBottom: 24 }}>
-              Our curated collections span everything from everyday essentials to statement pieces for special occasions. Every product is carefully selected for quality, style, and value.
+              {aboutParagraph2}
             </p>
             <div className="row ul-bs-row" style={{ marginBottom: 24 }}>
-              {[{ num: '50K+', label: 'Happy Customers' }, { num: '5K+', label: 'Products' }, { num: '100+', label: 'Brands' }, { num: '50+', label: 'Countries' }].map(stat => (
+              {aboutStats.map(stat => (
                 <div key={stat.label} className="col-6" style={{ marginBottom: 16 }}>
                   <div style={{ textAlign: 'center', background: '#FEF4F6', borderRadius: 16, padding: 20 }}>
                     <div style={{ fontSize: 32, fontWeight: 800, color: '#EF2853' }}>{stat.num}</div>
@@ -189,14 +212,18 @@ export function AboutPage() {
                 </div>
               ))}
             </div>
-            <Link to="/shop" className="ul-btn">Shop Our Collection <i className="bi bi-arrow-right"></i></Link>
+            {isButtonInternal ? (
+              <Link to={aboutButtonLink} className="ul-btn">{aboutButtonText} <i className="bi bi-arrow-right"></i></Link>
+            ) : (
+              <a href={aboutButtonLink} target="_blank" rel="noreferrer" className="ul-btn">{aboutButtonText} <i className="bi bi-arrow-right"></i></a>
+            )}
           </div>
         </div>
 
         {/* Customer Diaries */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <span className="ul-section-sub-title">Customer Diaries</span>
-          <h2 className="ul-section-title">Our Happy Customers</h2>
+          <span className="ul-section-sub-title">{diariesSubtitle}</span>
+          <h2 className="ul-section-title">{diariesTitle}</h2>
         </div>
       </div>
 
