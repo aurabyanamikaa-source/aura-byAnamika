@@ -2280,7 +2280,8 @@ button {
 /* "Follow Us @handle" heading — doubles as an Instagram link when the admin
    has set a store Instagram URL in Settings > Social Media. */
 .ul-insta-follow-link {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   gap: 10px;
