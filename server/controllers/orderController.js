@@ -20,7 +20,7 @@ const getCommerceSettings = async () => {
 // @desc   Create order
 // @route  POST /api/orders
 const createOrder = async (req, res) => {
-  const { items, shippingAddress, billingAddress, paymentMethod, couponCode, customerNote, guestEmail } = req.body;
+  const { items, shippingAddress, billingAddress, paymentMethod, couponCode, customerNote } = req.body;
 
   // Validate items and calculate total
   let subtotal = 0;
@@ -53,13 +53,13 @@ const createOrder = async (req, res) => {
   if (couponCode) {
     const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
     if (coupon) {
-      const validity = coupon.isValid(subtotal, req.user?._id);
+      const validity = coupon.isValid(subtotal, req.user._id);
       if (validity.valid) {
         discount = coupon.calculateDiscount(subtotal);
         couponId = coupon._id;
         // Mark coupon used
         coupon.usedCount += 1;
-        if (req.user) coupon.usedBy.push(req.user._id);
+        coupon.usedBy.push(req.user._id);
         await coupon.save();
       }
     }
@@ -71,8 +71,7 @@ const createOrder = async (req, res) => {
   const total = subtotal + shippingCost + tax - discount;
 
   const order = await Order.create({
-    user: req.user?._id,
-    guestEmail: req.user ? undefined : guestEmail,
+    user: req.user._id,
     items: orderItems,
     shippingAddress,
     billingAddress: billingAddress || shippingAddress,

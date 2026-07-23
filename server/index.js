@@ -28,6 +28,8 @@ const homepageRoutes = require('./routes/homepage');
 const cartRoutes = require('./routes/cart');
 const wishlistRoutes = require('./routes/wishlist');
 const uploadRoutes = require('./routes/upload');
+const paymentRoutes = require('./routes/payments');
+const { razorpayWebhook } = require('./controllers/paymentController');
 
 const errorHandler = require('./middleware/error');
 
@@ -47,6 +49,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Razorpay webhook needs the RAW request body to verify its signature, so it
+// must be registered before the global express.json() parser below.
+app.post('/api/payments/razorpay/webhook', express.raw({ type: 'application/json' }), razorpayWebhook);
+
 // Body parsers
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -65,6 +71,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/banners', bannerRoutes);

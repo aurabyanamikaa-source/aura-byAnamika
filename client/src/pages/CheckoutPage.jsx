@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Helmet } from 'react-helmet-async';
 import { selectCartItems, selectCartTotal, selectCoupon, clearCart } from '../store/slices/cartSlice';
@@ -7,6 +7,7 @@ import { selectSettings } from '../store/slices/settingsSlice';
 import Breadcrumb from '../components/common/Breadcrumb';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { loadRazorpayScript } from '../utils/loadRazorpay';
 
 const STEPS = ['Shipping', 'Payment', 'Review'];
 
@@ -18,6 +19,7 @@ const inputStyle = {
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const items = useSelector(selectCartItems);
   const { subtotal, discount, shipping, tax, total } = useSelector(selectCartTotal);
   const coupon = useSelector(selectCoupon);
@@ -26,19 +28,32 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  // Once we've created the DB order for this checkout attempt, we keep reusing
+  // it if the user retries payment instead of creating duplicate orders.
+  const [pendingOrderId, setPendingOrderId] = useState(null);
 
   const [shipping_, setShipping] = useState({
     firstName: user?.firstName || '', lastName: user?.lastName || '',
     company: '', address1: '', address2: '',
-    city: '', state: '', postalCode: '', country: 'US',
+    city: '', state: '', postalCode: '', country: 'IN',
     phone: user?.phone || '',
   });
-  const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [guestEmail, setGuestEmail] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [customerNote, setCustomerNote] = useState('');
 
   const fmt = n => `${currency_symbol}${Number(n).toFixed(2)}`;
+
+  // Payment must be tied to a logged-in account — bounce to login and come
+  // straight back here afterwards.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to continue to payment');
+      navigate('/login', { state: { from: location }, replace: true });
+    }
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) return null;
 
   if (items.length === 0) {
     return (
@@ -59,36 +74,84 @@ export default function CheckoutPage() {
         return false;
       }
     }
-    if (!isAuthenticated && !guestEmail) {
-      toast.error('Please enter your email address');
-      return false;
-    }
     return true;
   };
 
   const handlePlaceOrder = async () => {
     setLoading(true);
     try {
-      const orderData = {
-        items: items.map(item => ({
-          product: item.product,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-        })),
-        shippingAddress: shipping_,
-        paymentMethod,
-        couponCode: coupon?.code,
-        customerNote,
-        guestEmail: !isAuthenticated ? guestEmail : undefined,
-      };
+      // Reuse the already-created order if the user is retrying payment.
+      let orderId = pendingOrderId;
+      if (!orderId) {
+        const orderData = {
+          items: items.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+          })),
+          shippingAddress: shipping_,
+          paymentMethod,
+          couponCode: coupon?.code,
+          customerNote,
+        };
+        const { data } = await api.post('/orders', orderData);
+        orderId = data.data._id;
+        setPendingOrderId(orderId);
+      }
 
-      const { data } = await api.post('/orders', orderData);
-      dispatch(clearCart());
-      navigate(`/order-success/${data.data._id}`);
+      if (paymentMethod === 'cod') {
+        dispatch(clearCart());
+        navigate(`/order-success/${orderId}`);
+        return;
+      }
+
+      // Online payment via Razorpay
+      await loadRazorpayScript();
+      const { data: pay } = await api.post('/payments/razorpay/create-order', { orderId });
+
+      const rzp = new window.Razorpay({
+        key: pay.data.key,
+        amount: pay.data.amount,
+        currency: pay.data.currency,
+        name: pay.data.name,
+        description: `Order ${pay.data.orderNumber}`,
+        order_id: pay.data.razorpayOrderId,
+        prefill: pay.data.prefill,
+        theme: { color: '#EF2853' },
+        handler: async (response) => {
+          try {
+            await api.post('/payments/razorpay/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId,
+            });
+            dispatch(clearCart());
+            toast.success('Payment successful!');
+            navigate(`/order-success/${orderId}`);
+          } catch (err) {
+            toast.error('Payment verification failed. If money was deducted, it will be refunded automatically — contact support if it isn\'t within a few days.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            toast('Payment cancelled — you can try again.', { icon: 'ℹ️' });
+          },
+        },
+      });
+
+      rzp.on('payment.failed', (response) => {
+        setLoading(false);
+        toast.error(response.error?.description || 'Payment failed. Please try again.');
+      });
+
+      rzp.open();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to place order. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -96,16 +159,6 @@ export default function CheckoutPage() {
   const ShippingStep = () => (
     <div>
       <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 24 }}>Shipping Information</h3>
-
-      {!isAuthenticated && (
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: 8, fontSize: 14 }}>Email Address *</label>
-          <input style={inputStyle} type="email" placeholder="your@email.com" value={guestEmail} onChange={e => setGuestEmail(e.target.value)} />
-          <p style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
-            Have an account? <Link to="/login" style={{ color: '#EF2853' }}>Login</Link> for faster checkout.
-          </p>
-        </div>
-      )}
 
       <div className="row ul-bs-row">
         {[
@@ -161,9 +214,8 @@ export default function CheckoutPage() {
       <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 24 }}>Payment Method</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {[
+          { id: 'razorpay', label: 'Pay Online', icon: 'bi-credit-card', desc: 'Cards, UPI, Netbanking & Wallets — via Razorpay' },
           { id: 'cod', label: 'Cash on Delivery', icon: 'bi-cash-coin', desc: 'Pay when your order arrives' },
-          { id: 'card', label: 'Credit / Debit Card', icon: 'bi-credit-card', desc: 'Visa, Mastercard, American Express' },
-          { id: 'paypal', label: 'PayPal', icon: 'bi-paypal', desc: 'Pay securely with your PayPal account' },
         ].map(method => (
           <label
             key={method.id}
@@ -192,26 +244,12 @@ export default function CheckoutPage() {
         ))}
       </div>
 
-      {paymentMethod === 'card' && (
+      {paymentMethod === 'razorpay' && (
         <div style={{ marginTop: 24, padding: 20, background: '#f9f9f9', borderRadius: 14 }}>
-          <p style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: '#666', margin: 0 }}>
             <i className="bi bi-shield-lock-fill me-2" style={{ color: '#22c55e' }}></i>
-            Your payment is encrypted and secure
+            You'll be redirected to Razorpay's secure checkout to pay by card, UPI, netbanking, or wallet. We never see or store your card details.
           </p>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontWeight: 500, marginBottom: 8, fontSize: 14 }}>Card Number</label>
-            <input style={inputStyle} placeholder="1234 5678 9012 3456" maxLength={19} />
-          </div>
-          <div className="row ul-bs-row">
-            <div className="col-6">
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: 8, fontSize: 14 }}>Expiry Date</label>
-              <input style={inputStyle} placeholder="MM/YY" maxLength={5} />
-            </div>
-            <div className="col-6">
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: 8, fontSize: 14 }}>CVV</label>
-              <input style={inputStyle} placeholder="123" maxLength={4} type="password" />
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -242,7 +280,7 @@ export default function CheckoutPage() {
           <button onClick={() => setStep(1)} style={{ color: '#EF2853', fontSize: 13, fontWeight: 500 }}>Edit</button>
         </div>
         <p style={{ margin: '8px 0 0', fontSize: 14, color: '#444', textTransform: 'capitalize' }}>
-          {paymentMethod === 'cod' ? 'Cash on Delivery' : paymentMethod === 'card' ? 'Credit/Debit Card' : 'PayPal'}
+          {paymentMethod === 'cod' ? 'Cash on Delivery' : 'Pay Online (Razorpay)'}
         </p>
       </div>
 
@@ -345,7 +383,7 @@ export default function CheckoutPage() {
                       opacity: loading ? 0.8 : 1, display: 'flex', alignItems: 'center', gap: 10,
                     }}
                   >
-                    {loading ? 'Placing Order...' : 'Place Order'} <i className="bi bi-bag-check"></i>
+                    {loading ? (paymentMethod === 'cod' ? 'Placing Order...' : 'Processing...') : (paymentMethod === 'cod' ? 'Place Order' : 'Pay Now')} <i className="bi bi-bag-check"></i>
                   </button>
                 )}
               </div>
